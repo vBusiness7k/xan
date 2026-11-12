@@ -23,7 +23,6 @@ ligolo-ng
 proxychains4
 tor
 evil-winrm
-bloodhound.py
 ssh-audit
 testssl.sh
 sslscan

@@ -1,0 +1,22 @@
+name: chat
+on:
+  workflow_dispatch:
+    inputs:
+      prompt: { required: true }
+      model:  { default: "V5.1 Advanced" }
+      mode:   { default: "ASK" }
+jobs:
+  say:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip3 install -q --break-system-packages httpx
+      - run: python3 -m hexencore.chat
+        env:
+          OPENROUTER_KEY: ${{ secrets.OPENROUTER_KEY }}
+          STATE_PAT: ${{ secrets.STATE_PAT }}
+          GH_USER: ${{ github.repository_owner }}
+          PROMPT: ${{ inputs.prompt }}
+          MODEL: ${{ inputs.model }}
+          MODE: ${{ inputs.mode }}

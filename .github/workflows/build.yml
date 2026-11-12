@@ -1,47 +1,28 @@
 name: build
 on: { workflow_dispatch: }
-
 jobs:
-  preflight:
+  pre:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: validate package names
-        run: |
-          docker run --rm -v "$PWD/arsenal:/a:ro" --platform linux/amd64 \
-            kalilinux/kali-rolling bash -lc '
-              apt-get update -qq >/dev/null 2>&1
-              miss=""
-              while read -r p; do
-                [ -z "$p" ] && continue
-                apt-cache policy "$p" 2>/dev/null | grep -q Candidate || miss="$miss $p"
-              done < /a/packages.list
-              if [ -n "$miss" ]; then echo "::error::missing:$miss"; exit 1; fi
-              echo "all package names resolve"'
-
+      - run: |
+          docker run --rm -v "$PWD/arsenal:/a:ro" --platform linux/amd64 kalilinux/kali-rolling bash -lc '
+            apt-get update -qq >/dev/null 2>&1; m=""
+            while read -r p; do [ -z "$p" ] && continue
+              apt-cache policy "$p" 2>/dev/null | grep -q Candidate || m="$m $p"; done < /a/packages.list
+            [ -n "$m" ] && { echo "::error::missing:$m"; exit 1; }; echo ok'
   build:
-    needs: preflight
+    needs: pre
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: free disk
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL
-          df -h / | tail -1
+      - run: sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL; df -h / | tail -1
       - uses: actions/cache@v4
-        id: img
+        id: i
         with:
-          path: /tmp/arsenal.tar.zst
+          path: /tmp/a.zst
           key: "arsenal-${{ hashFiles('arsenal/Dockerfile','arsenal/packages.list','arsenal/tools.list') }}"
-      - if: steps.img.outputs.cache-hit != 'true'
-        run: |
-          docker build -t xan/arsenal:v1 arsenal/
-          docker run --rm xan/arsenal:v1 smoke
-          docker save xan/arsenal:v1 | zstd -19 -T0 -o /tmp/arsenal.tar.zst
-          ls -lh /tmp/arsenal.tar.zst
-      - name: verify cache payload
-        run: |
-          zstd -d -c /tmp/arsenal.tar.zst | docker load
-          docker run --rm xan/arsenal:v1 smoke
-          echo "image ok"
+      - if: steps.i.outputs.cache-hit != 'true'
+        run: docker build -t xan/arsenal:v1 arsenal/ && docker run --rm xan/arsenal:v1 smoke && docker save xan/arsenal:v1 | zstd -19 -T0 -o /tmp/a.zst
+      - run: zstd -d -c /tmp/a.zst | docker load && docker run --rm xan/arsenal:v1 smoke && echo image-ok

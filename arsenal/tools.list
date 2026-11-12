@@ -1,18 +1,9 @@
-# recon
 nmap masscan rustscan naabu subfinder amass dnsx dnsrecon fierce theharvester whois dig
-# enum
 ffuf gobuster feroxbuster dirb wfuzz nikto wpscan whatweb katana
-# vuln
 nuclei testssl.sh sslscan ssh-audit
-# exploit
 sqlmap hydra john hashcat msfconsole netexec impacket-psexec responder
-# ad
 kerbrute evil-winrm certipy bloodhound-python enum4linux smbclient
-# tunnel
 chisel ligolo-ng proxychains4
-# re
 radare2 objdump readelf strings binwalk
-# media
 ffmpeg exiftool
-# plumbing
 jq chromium
