@@ -10,8 +10,13 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* /usr/share/doc/* /usr/share/man/* /tmp/packages.list
 
 RUN pip3 install --no-cache-dir \
-      curl_cffi httpx playwright mitmproxy yt-dlp \
+      curl_cffi httpx playwright mitmproxy yt-dlp certipy-ad \
       beautifulsoup4 lxml pyjwt dnspython requests-ntlm
+
+RUN curl -fsSL -o /usr/local/bin/kerbrute \
+      https://github.com/ropnop/kerbrute/releases/latest/download/kerbrute_linux_amd64 \
+ && chmod +x /usr/local/bin/kerbrute \
+ && kerbrute --help >/dev/null
 
 RUN useradd -m -u 1000 xan && mkdir -p /work /out /loot && chown -R xan /work /out /loot
 USER xan

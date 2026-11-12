@@ -22,9 +22,7 @@ chisel
 ligolo-ng
 proxychains4
 tor
-kerbrute
 evil-winrm
-certipy
 bloodhound.py
 ssh-audit
 testssl.sh
