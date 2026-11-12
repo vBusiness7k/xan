@@ -1,0 +1,4 @@
+out/
+loot/
+*.tar
+__pycache__/
