@@ -1,51 +1,69 @@
-<!doctype html><meta charset=utf-8><title>XANTHOROX</title>
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<title>XANTHOROX</title>
 <style>
-:root{--b:#0b0d10;--d:#232a34;--t:#c9d1d9;--g:#8b5cf6}
-body{margin:0;background:var(--b);color:var(--t);font:13px/1.55 ui-monospace,Menlo,monospace}
-header{display:flex;gap:8px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--d);flex-wrap:wrap}
-h1{margin:0;font-size:12px;letter-spacing:.2em;color:#fff}
-input,select,button{background:#11151a;border:1px solid var(--d);color:var(--t);padding:6px 8px;font:inherit;border-radius:5px}
+:root{--b:#08090c;--p:#0f1217;--d:#20262f;--t:#d5dae1;--g:#8b5cf6;--m:#6b7684}
+*{box-sizing:border-box}
+body{margin:0;background:var(--b);color:var(--t);font:13.5px/1.6 ui-monospace,SFMono,Menlo,monospace;height:100vh;display:flex;flex-direction:column}
+header{display:flex;gap:7px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--d);flex-wrap:wrap;background:var(--p)}
+h1{margin:0 10px 0 0;font-size:11px;letter-spacing:.24em;color:#fff}
+select,input,button{background:#0c1015;border:1px solid var(--d);color:var(--t);padding:6px 8px;font:inherit;border-radius:6px;outline:0}
 button{background:var(--g);border:0;color:#fff;font-weight:600;cursor:pointer}
-#w{display:grid;grid-template-columns:1.15fr 1fr;gap:1px;background:var(--d);height:calc(100vh - 92px)}
-#w>div{background:var(--b);padding:12px;overflow:auto}
-#chat{white-space:pre-wrap;font-size:12px}
-#foot{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--d)}
+button:disabled{opacity:.35}
+#log{flex:1;overflow:auto;padding:16px 20px;white-space:pre-wrap;word-break:break-word}
+.u{color:#8ab4f8;margin:14px 0 4px}
+.a{color:var(--t)}
+.meta{color:var(--m);font-size:11px}
+#foot{display:flex;gap:8px;padding:11px 14px;border-top:1px solid var(--d);background:var(--p)}
 #in{flex:1}
-.pill{font-size:10px;padding:2px 7px;border-radius:9px;background:#1b2029;color:#8b949e}
-.hit{color:#7ee787}
+.pill{font-size:10px;padding:2px 8px;border-radius:10px;background:#161b22;color:var(--m)}
+code{background:#12161c;padding:1px 5px;border-radius:3px}
+pre{background:#0b0f14;border:1px solid var(--d);padding:10px;border-radius:6px;overflow:auto}
 </style>
 <header>
- <h1>XANTHOROX x REA</h1>
- <select id=m><option>V5.1 Advanced<option>Coder<option>V4<option>Vision<option>Reasoner</select>
+ <h1>XANTHOROX</h1>
+ <select id=m><option>V5.1 Advanced<option>Coder<option>V4<option>Reasoner<option>Vision</select>
  <select id=md><option>ASK<option>ARCHITECT<option>AGENT<option>REVIEW<option>ORCHESTRATOR</select>
- <input id=t placeholder="target" size=16>
- <input id=s placeholder="scope" size=18>
- <button id=scan>SCAN</button>
- <span class=pill id=st>idle</span>
+ <span class=pill id=st>ready</span>
+ <button id=clr>clear</button>
 </header>
-<div id=w><div><div id=chat>(ready)</div></div><div><div id=fnd></div></div></div>
-<div id=foot><input id=in placeholder="ask, or describe a build..."><button id=send>SEND</button></div>
+<div id=log></div>
+<div id=foot><input id=in placeholder="ask anything, or describe a build" autofocus><button id=send>send</button></div>
 <script>
-const O="vBusiness7k",P="xan";let pat=localStorage.k||"";
+const API="https://xan-chat.workers.dev"; let hist=[], busy=false;
 const $=i=>document.getElementById(i);
-if(!pat){pat=prompt("PAT (repo xan, Actions:write, Contents:read)");if(pat)localStorage.k=pat}
-const api=(p,o={})=>fetch(`https://api.github.com/repos/${O}/${P}${p}`,{...o,
- headers:{Authorization:`Bearer ${pat}`,Accept:"application/vnd.github+json",...o.headers}});
-const raw=f=>`https://raw.githubusercontent.com/${O}/${P}/logs/latest/${f}?t=${Date.now()}`;
-async function fire(wf,inputs){const r=await api(`/actions/workflows/${wf}/dispatches`,
- {method:"POST",body:JSON.stringify({ref:"master",inputs})});$("st").textContent=r.status<300?"queued":"err "+r.status}
-$("send").onclick=()=>{const v=$("in").value.trim();if(!v)return;$("in").value="";
- fire("chat.yml",{prompt:v,model:$("m").value,mode:$("md").value})};
-$("in").onkeydown=e=>{if(e.key=="Enter")$("send").click()};
-$("scan").onclick=()=>{const t=$("t").value.trim();if(!t)return;
- fire("scan.yml",{target:t,scope:$("s").value.trim()||`*.${t}`,shards:"8"})};
-setInterval(async()=>{let b="";
- for(let i=0;i<8;i++){try{const r=await fetch(raw(i+".log"));if(r.ok)b+=await r.text()}catch(e){}}
- try{const r=await fetch(raw("chat.log"));if(r.ok)b+=await r.text()}catch(e){}
- if(b){$("chat").textContent=b.slice(-16000);$("chat").scrollTop=1e9;$("st").textContent="live"}
- try{const r=await fetch(`https://raw.githubusercontent.com/${O}/xan-state/master/findings/${$("t").value}.jsonl`);
-  if(r.ok){const l=(await r.text()).trim().split("\n").filter(Boolean).slice(-40).reverse();
-   $("fnd").innerHTML=l.map(x=>{const o=JSON.parse(x);
-    return `<div class=hit>${o.host}</div><div>${o.tool} ${o.phase}</div><div>${(o.items||[]).slice(0,2).join("<br>")}</div><hr>`}).join("")}}catch(e){}
-},2500);
+function add(cls,txt){const d=document.createElement("div");d.className=cls;d.textContent=txt;$("log").appendChild(d);$("log").scrollTop=1e9;return d}
+function md(el,s){
+  el.innerHTML = s.replace(/&/g,"&amp;").replace(/</g,"&lt;")
+   .replace(/```([\s\S]*?)```/g,"<pre>$1</pre>")
+   .replace(/`([^`]+)`/g,"<code>$1</code>")
+   .replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>");
+}
+$("clr").onclick=()=>{$("log").innerHTML="";hist=[]};
+async function send(){
+  const v=$("in").value.trim(); if(!v||busy) return;
+  $("in").value=""; busy=true; $("send").disabled=true; $("st").textContent="...";
+  add("u","› "+v);
+  const out=add("a",""); let acc="";
+  try{
+    const r=await fetch(API,{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({prompt:v,model:$("m").value,mode:$("md").value,history:hist.slice(-8)})});
+    if(!r.ok){acc="ERROR "+r.status; md(out,acc)}
+    else{
+      const rd=r.body.getReader(), dec=new TextDecoder();
+      for(;;){
+        const {done,value}=await rd.read(); if(done) break;
+        const chunk=dec.decode(value,{stream:true});
+        for(const line of chunk.split("\n")){
+          if(!line.startsWith("data:")) continue;
+          const j=line.slice(5).trim(); if(j==="[DONE]") continue;
+          try{const d=JSON.parse(j); const t=d.choices?.[0]?.delta?.content||""; if(t){acc+=t; md(out,acc)} }catch(e){}
+        }
+      }
+    }
+  }catch(e){acc+="\nERROR "+e.message; md(out,acc)}
+  hist.push({role:"user",content:v},{role:"assistant",content:acc});
+  busy=false; $("send").disabled=false; $("st").textContent="ready"; $("in").focus();
+}
+$("send").onclick=send;
+$("in").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};
 </script>
